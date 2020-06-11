@@ -1,0 +1,36 @@
+public static void ConvertInvoicetoBill()
+        {
+            string invoiceInternalId = NSUtility.ReadInternalId("\nEnter internal ID for Invoice for which bill is to be generated: ");
+
+            InitializeRecord ir = new InitializeRecord();
+            ir.type = InitializeType.vendorBill;
+            InitializeRef iref = new InitializeRef();
+            iref.type = InitializeRefType.invoice;
+            iref.typeSpecified = true;
+            iref.internalId = invoiceInternalId;
+            ir.reference = iref;
+
+            ReadResponse getInitResp = Client.Service.initialize(ir);
+
+            if (getInitResp.status.isSuccess)
+            {
+                VendorBill vendorBill = new VendorBill();
+                vendorBill = (VendorBill)getInitResp.record;
+
+                if (Client.UseTba)
+                {
+                    Client.SetPreferences();
+                }
+                WriteResponse writeRes = Client.Service.add(vendorBill);
+
+                if (writeRes.status.isSuccess)
+                {
+                    Client.Out.WriteLn("\nVendor Bill successfully created for the invoice\n Bill Internal ID=" + ((RecordRef)writeRes.baseRef).internalId);
+                }
+                else
+                {
+                    Client.Out.Error(Client.GetStatusDetails(writeRes.status));
+                }
+            }
+            
+        }
